@@ -1,0 +1,402 @@
+/* ============================================================
+   RetroJava Arcade — style.css
+   ------------------------------------------------------------
+   ⚠️ CREDENCIAIS DO FIREBASE
+   As credenciais reais do Firebase devem ir no arquivo app.js
+   (objeto firebaseConfig no topo). CSS não executa JavaScript,
+   então mantenha as chaves lá. Este bloco é só um lembrete:
+
+   firebaseConfig = {
+     apiKey: "SUA_API_KEY",
+     authDomain: "SEU_PROJETO.firebaseapp.com",
+     databaseURL: "https://SEU_PROJETO-default-rtdb.firebaseio.com",
+     projectId: "SEU_PROJETO",
+     storageBucket: "SEU_PROJETO.appspot.com",
+     messagingSenderId: "XXXXXXXX",
+     appId: "1:XXXX:web:XXXX"
+   };
+   ============================================================ */
+
+:root{
+  --bg:#07070c;
+  --bg-2:#0e0f1a;
+  --surface:#131425;
+  --surface-2:#1c1e33;
+  --border:#2a2d4a;
+  --text:#e6e8ff;
+  --muted:#8a8fb8;
+  --primary:#00ffa3;
+  --primary-2:#00c9ff;
+  --accent:#ff2e88;
+  --warn:#ffcc00;
+  --danger:#ff4d6d;
+  --radius:14px;
+  --shadow:0 10px 30px rgba(0,0,0,.5);
+  --glow: 0 0 20px rgba(0,255,163,.35);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Rajdhani',system-ui,sans-serif;
+  background:
+    radial-gradient(1200px 500px at 10% -10%, rgba(0,201,255,.15), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(255,46,136,.12), transparent 60%),
+    linear-gradient(180deg,var(--bg),var(--bg-2));
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+h1,h2,h3{font-family:'Press Start 2P',monospace;letter-spacing:.5px}
+h2{font-size:1rem;margin:0 0 12px}
+h3{font-size:.9rem}
+
+/* ---------- HEADER ---------- */
+.site-header{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:16px;
+  padding:14px 22px;
+  background:rgba(7,7,12,.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand h1{font-size:.9rem;margin:0;color:var(--text)}
+.brand h1 span{color:var(--primary)}
+.logo-dot{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--primary);
+  box-shadow:var(--glow);
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{50%{opacity:.5}}
+.main-menu{
+  display:flex;gap:6px;flex:1;flex-wrap:wrap;
+  overflow-x:auto;
+}
+.main-menu a{
+  color:var(--text);text-decoration:none;font-weight:600;
+  padding:8px 14px;border-radius:8px;
+  border:1px solid transparent;
+  transition:.2s;
+  white-space:nowrap;
+}
+.main-menu a:hover{
+  border-color:var(--primary);
+  color:var(--primary);
+  box-shadow:var(--glow);
+}
+.header-actions{margin-left:auto}
+
+/* ---------- BUTTONS ---------- */
+.btn{
+  cursor:pointer;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);
+  padding:10px 16px;border-radius:10px;
+  font-family:'Rajdhani',sans-serif;font-weight:700;
+  font-size:.95rem;letter-spacing:.5px;
+  transition:.2s;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  color:#001a10;border:none;
+  box-shadow:0 6px 18px rgba(0,255,163,.35);
+}
+.btn.primary:hover{box-shadow:0 8px 24px rgba(0,255,163,.55)}
+.btn.ghost{background:transparent}
+.btn.small{padding:6px 12px;font-size:.85rem}
+.btn.big{padding:14px 22px;font-size:1rem;width:100%}
+.file-btn{display:inline-flex;align-items:center;justify-content:center}
+
+/* ---------- LAYOUT ---------- */
+.container{padding:24px;max-width:1400px;margin:0 auto}
+.top-section{
+  display:grid;grid-template-columns:340px 1fr;gap:24px;
+  margin-bottom:32px;
+}
+
+/* ---------- PHONE ---------- */
+.phone-wrap{display:flex;justify-content:center}
+.phone{
+  width:320px;
+  background:linear-gradient(160deg,#1a1c2e,#0b0c17);
+  border:2px solid #2a2d4a;
+  border-radius:38px;
+  padding:22px 14px 16px;
+  box-shadow:
+    0 0 0 3px #0a0b14,
+    0 20px 50px rgba(0,0,0,.6),
+    inset 0 0 0 1px rgba(255,255,255,.04);
+  position:relative;
+}
+.phone-notch{
+  width:80px;height:8px;background:#000;
+  border-radius:6px;margin:0 auto 12px;
+}
+.phone-screen{
+  aspect-ratio:9/12;
+  background:#000;
+  border-radius:8px;
+  border:1px solid #24263f;
+  overflow:hidden;
+  position:relative;
+  box-shadow:inset 0 0 30px rgba(0,255,163,.08);
+}
+.phone-screen iframe{width:100%;height:100%;border:0}
+.screen-placeholder{
+  height:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  color:var(--muted);text-align:center;padding:20px;
+  font-family:'Press Start 2P',monospace;font-size:.6rem;line-height:1.6;
+}
+.screen-placeholder p{color:var(--primary);margin:0 0 8px}
+.screen-placeholder small{font-size:.55rem}
+
+.phone-controls{
+  margin-top:16px;
+  display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+}
+.dpad{
+  display:grid;
+  grid-template-columns:repeat(3,36px);
+  grid-template-rows:repeat(3,36px);
+  gap:4px;justify-content:center;
+}
+.dpad button{
+  background:var(--surface-2);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;
+  cursor:pointer;font-weight:700;
+}
+.dpad button:hover{border-color:var(--primary);color:var(--primary)}
+.dpad button[data-key="up"]{grid-column:2;grid-row:1}
+.dpad button[data-key="left"]{grid-column:1;grid-row:2}
+.dpad button[data-key="fire"]{grid-column:2;grid-row:2;background:var(--accent);border-color:transparent;color:#fff}
+.dpad button[data-key="right"]{grid-column:3;grid-row:2}
+.dpad button[data-key="down"]{grid-column:2;grid-row:3}
+
+.side-btns{display:flex;flex-direction:column;gap:8px}
+.ab{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  color:#001a10;font-weight:900;border:none;cursor:pointer;
+  box-shadow:0 4px 12px rgba(0,255,163,.4);
+}
+
+.phone-bottom{
+  margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+}
+
+/* ---------- BANNER ---------- */
+.banner-area{
+  display:flex;flex-direction:column;gap:14px;
+}
+.banner-card{
+  background:linear-gradient(135deg,var(--surface),var(--surface-2));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  display:flex;gap:18px;align-items:center;
+  position:relative;overflow:hidden;
+}
+.banner-card::before{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(120deg,transparent 40%,rgba(0,255,163,.08),transparent 60%);
+  pointer-events:none;
+}
+.banner-card img{
+  width:120px;height:120px;object-fit:cover;border-radius:10px;
+  border:1px solid var(--border);flex-shrink:0;
+}
+.banner-card .banner-body{flex:1;min-width:0}
+.banner-card h3{margin:0 0 6px;color:var(--primary)}
+.banner-card p{margin:0 0 10px;color:var(--muted);font-size:.95rem}
+.banner-empty{
+  border:2px dashed var(--border);border-radius:var(--radius);
+  padding:30px;text-align:center;color:var(--muted);
+}
+
+/* ---------- FILTERS ---------- */
+.filters{
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+  justify-content:space-between;margin-bottom:16px;
+}
+.filter-controls{display:flex;gap:10px;flex-wrap:wrap}
+.filter-controls input,
+.filter-controls select{
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);padding:10px 14px;border-radius:10px;
+  font-family:inherit;font-size:.95rem;
+  min-width:180px;
+}
+.filter-controls input:focus,
+.filter-controls select:focus{outline:none;border-color:var(--primary)}
+
+/* ---------- GAMES GRID ---------- */
+.games-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:18px;
+}
+.game-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;cursor:pointer;
+  transition:.25s;position:relative;
+  display:flex;flex-direction:column;
+}
+.game-card:hover{
+  transform:translateY(-4px);
+  border-color:var(--primary);
+  box-shadow:0 10px 30px rgba(0,255,163,.2);
+}
+.game-card .cover{
+  aspect-ratio:4/3;background:#000;
+  background-size:cover;background-position:center;
+}
+.game-card .info{padding:12px}
+.game-card h4{
+  margin:0 0 6px;font-size:.95rem;
+  font-family:'Rajdhani',sans-serif;font-weight:700;
+}
+.game-card .cat{
+  font-size:.75rem;color:var(--primary);
+  text-transform:uppercase;letter-spacing:1px;
+}
+
+/* ---------- MODAL ---------- */
+.modal{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;animation:fadeIn .2s;
+}
+.modal[hidden]{display:none}
+@keyframes fadeIn{from{opacity:0}}
+.modal-content{
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  max-width:600px;width:100%;
+  max-height:90vh;overflow-y:auto;
+  position:relative;
+  box-shadow:var(--shadow);
+}
+.modal-content.small{max-width:400px}
+.modal-content.large{max-width:900px}
+.modal-close{
+  position:absolute;top:10px;right:14px;
+  background:transparent;border:none;color:var(--muted);
+  font-size:1.8rem;cursor:pointer;z-index:2;
+}
+.modal-close:hover{color:var(--primary)}
+#modalCover{width:100%;max-height:280px;object-fit:cover}
+.modal-body{padding:22px}
+.modal-body h3{margin:0 0 10px}
+.badges{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.badges span{
+  background:var(--surface-2);color:var(--primary);
+  padding:4px 10px;border-radius:20px;
+  font-size:.75rem;text-transform:uppercase;letter-spacing:1px;
+}
+.badges span:empty{display:none}
+
+/* ---------- LOGIN / ADMIN FORMS ---------- */
+#loginForm,.admin-form{
+  padding:22px;display:flex;flex-direction:column;gap:10px;
+}
+.admin-form input,.admin-form textarea,
+#loginForm input{
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);padding:10px 14px;border-radius:8px;
+  font-family:inherit;font-size:.95rem;
+}
+.admin-form textarea{min-height:80px;resize:vertical}
+.admin-form .row{display:flex;gap:10px}
+.admin-form .row>*{flex:1}
+.error{color:var(--danger);font-size:.85rem;margin:0}
+
+/* ---------- ADMIN TABS ---------- */
+.admin-tabs{
+  display:flex;gap:6px;padding:16px 22px 0;
+  border-bottom:1px solid var(--border);align-items:center;
+}
+.tab-btn{
+  background:transparent;border:none;color:var(--muted);
+  padding:10px 16px;cursor:pointer;font-weight:700;
+  border-bottom:2px solid transparent;
+  font-family:inherit;font-size:.95rem;
+}
+.tab-btn.active{color:var(--primary);border-color:var(--primary)}
+.tab-btn.right,.admin-tabs .right{margin-left:auto}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+.admin-list{
+  list-style:none;margin:0;padding:0 22px 22px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.admin-list li{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:10px 14px;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.admin-list li .item-title{font-weight:700}
+.admin-list li .item-sub{font-size:.8rem;color:var(--muted)}
+.admin-list .actions{display:flex;gap:6px;flex-shrink:0}
+.admin-list button{
+  background:var(--surface-2);border:1px solid var(--border);
+  color:var(--text);padding:6px 10px;border-radius:6px;
+  cursor:pointer;font-size:.8rem;
+}
+.admin-list button.del:hover{border-color:var(--danger);color:var(--danger)}
+.admin-list button.edit:hover{border-color:var(--primary);color:var(--primary)}
+
+/* ---------- FOOTER ---------- */
+.site-footer{
+  padding:24px;text-align:center;
+  color:var(--muted);font-size:.9rem;
+  border-top:1px solid var(--border);margin-top:40px;
+}
+
+/* ---------- FULLSCREEN ---------- */
+.phone-screen:fullscreen{
+  width:100vw;height:100vh;
+  border-radius:0;border:none;
+}
+.phone-screen:fullscreen iframe{width:100%;height:100%}
+
+/* ============================================================
+   RESPONSIVO
+   ============================================================ */
+@media (max-width:960px){
+  .top-section{grid-template-columns:1fr}
+  .phone{margin:0 auto}
+  .site-header{padding:12px 16px}
+  .brand h1{font-size:.75rem}
+}
+
+@media (max-width:640px){
+  .container{padding:16px}
+  .games-grid{
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+  }
+  .game-card h4{font-size:.8rem}
+  .game-card .info{padding:8px}
+  .game-card .cat{font-size:.65rem}
+  .filters{flex-direction:column;align-items:stretch}
+  .filter-controls input,.filter-controls select{min-width:0;flex:1}
+  .banner-card{flex-direction:column;text-align:center}
+  .banner-card img{width:100%;height:auto;max-height:160px}
+  .modal-body{padding:16px}
+  h2{font-size:.85rem}
+}
+
+@media (max-width:400px){
+  .phone{width:100%;max-width:300px}
+  .main-menu a{padding:6px 10px;font-size:.85rem}
+  .brand h1{font-size:.7rem}
+}

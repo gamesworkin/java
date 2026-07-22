@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RetroJava Arcade — Emulador de Jogos Java Antigos</title>
+<meta name="description" content="Emule seus jogos Java (J2ME) favoritos direto no navegador. Suba sua ROM ou jogue as clássicas selecionadas." />
+<link rel="stylesheet" href="style.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="brand">
+    <span class="logo-dot"></span>
+    <h1>Retro<span>Java</span></h1>
+  </div>
+  <nav id="mainMenu" class="main-menu"><!-- itens dinâmicos --></nav>
+  <div class="header-actions">
+    <button id="loginBtn" class="btn ghost">Admin</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="container">
+
+  <section class="top-section">
+    <!-- PHONE -->
+    <div class="phone-wrap">
+      <div class="phone" id="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen" id="phoneScreen">
+          <div class="screen-placeholder">
+            <p>Selecione um jogo</p>
+            <small>ou suba sua ROM .jar / .jad</small>
+          </div>
+        </div>
+        <div class="phone-controls">
+          <div class="dpad">
+            <button data-key="up">▲</button>
+            <button data-key="left">◀</button>
+            <button data-key="fire">●</button>
+            <button data-key="right">▶</button>
+            <button data-key="down">▼</button>
+          </div>
+          <div class="side-btns">
+            <button data-key="a" class="ab">A</button>
+            <button data-key="b" class="ab">B</button>
+          </div>
+        </div>
+        <div class="phone-bottom">
+          <button id="fullscreenBtn" class="btn small">Full Screen</button>
+          <label class="btn small file-btn">
+            Subir ROM
+            <input type="file" id="romInput" accept=".jar,.jad" hidden />
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- BANNER -->
+    <aside class="banner-area" id="bannerArea">
+      <!-- banners dinâmicos -->
+    </aside>
+  </section>
+
+  <!-- FILTER -->
+  <section class="filters">
+    <h2>Jogos disponíveis</h2>
+    <div class="filter-controls">
+      <input type="search" id="searchInput" placeholder="Buscar jogo..." />
+      <select id="categoryFilter"><option value="">Todas categorias</option></select>
+    </div>
+  </section>
+
+  <!-- GAME GRID -->
+  <section class="games-grid" id="gamesGrid"></section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <p>© <span id="year"></span> RetroJava Arcade — Feito com nostalgia.</p>
+</footer>
+
+<!-- GAME MODAL -->
+<div class="modal" id="gameModal" hidden>
+  <div class="modal-content">
+    <button class="modal-close" data-close>&times;</button>
+    <img id="modalCover" alt="" />
+    <div class="modal-body">
+      <h3 id="modalTitle"></h3>
+      <div class="badges">
+        <span id="modalCategory"></span>
+        <span id="modalSubcategory"></span>
+      </div>
+      <p id="modalDescription"></p>
+      <button id="playNowBtn" class="btn primary big">Jogar agora!</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal" id="loginModal" hidden>
+  <div class="modal-content small">
+    <button class="modal-close" data-close>&times;</button>
+    <h3>Login Admin</h3>
+    <form id="loginForm">
+      <input type="email" id="loginEmail" placeholder="Email" required />
+      <input type="password" id="loginPassword" placeholder="Senha" required />
+      <button type="submit" class="btn primary">Entrar</button>
+      <p class="error" id="loginError"></p>
+    </form>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="modal" id="adminModal" hidden>
+  <div class="modal-content large">
+    <button class="modal-close" data-close>&times;</button>
+    <h3>Painel do Administrador</h3>
+    <div class="admin-tabs">
+      <button class="tab-btn active" data-tab="games">Jogos</button>
+      <button class="tab-btn" data-tab="menu">Menu</button>
+      <button class="tab-btn" data-tab="banners">Banners</button>
+      <button id="logoutBtn" class="btn ghost right">Sair</button>
+    </div>
+
+    <!-- Games tab -->
+    <div class="tab-panel active" data-panel="games">
+      <form id="gameForm" class="admin-form">
+        <input type="hidden" id="gameId" />
+        <input id="gameCover" placeholder="URL da capa/screenshot" required />
+        <input id="gameTitle" placeholder="Título" required />
+        <textarea id="gameDescription" placeholder="Descrição" required></textarea>
+        <div class="row">
+          <input id="gameCategory" placeholder="Categoria" required />
+          <input id="gameSubcategory" placeholder="Subcategoria" />
+        </div>
+        <input id="gameLink" placeholder="Link do jogo (URL)" required />
+        <div class="row">
+          <button type="submit" class="btn primary">Salvar</button>
+          <button type="button" id="gameFormReset" class="btn ghost">Limpar</button>
+        </div>
+      </form>
+      <ul id="adminGamesList" class="admin-list"></ul>
+    </div>
+
+    <!-- Menu tab -->
+    <div class="tab-panel" data-panel="menu">
+      <form id="menuForm" class="admin-form">
+        <input type="hidden" id="menuId" />
+        <input id="menuLabel" placeholder="Nome do item" required />
+        <input id="menuUrl" placeholder="URL (ex: #, https://...)" required />
+        <div class="row">
+          <button type="submit" class="btn primary">Salvar</button>
+          <button type="button" id="menuFormReset" class="btn ghost">Limpar</button>
+        </div>
+      </form>
+      <ul id="adminMenuList" class="admin-list"></ul>
+    </div>
+
+    <!-- Banners tab -->
+    <div class="tab-panel" data-panel="banners">
+      <form id="bannerForm" class="admin-form">
+        <input type="hidden" id="bannerId" />
+        <input id="bannerTitle" placeholder="Título do banner" />
+        <textarea id="bannerText" placeholder="Texto/descrição"></textarea>
+        <input id="bannerImage" placeholder="URL da imagem (opcional)" />
+        <input id="bannerButtonLabel" placeholder="Texto do botão (opcional)" />
+        <input id="bannerButtonUrl" placeholder="URL do botão (opcional)" />
+        <div class="row">
+          <button type="submit" class="btn primary">Salvar</button>
+          <button type="button" id="bannerFormReset" class="btn ghost">Limpar</button>
+        </div>
+      </form>
+      <ul id="adminBannersList" class="admin-list"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
