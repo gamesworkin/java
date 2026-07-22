@@ -6,14 +6,15 @@
    (Project Settings > Your apps > Web app)
    ============================================================ */
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_PROJETO.firebaseapp.com",
-  databaseURL: "https://SEU_PROJETO-default-rtdb.firebaseio.com",
-  projectId: "SEU_PROJETO",
-  storageBucket: "SEU_PROJETO.appspot.com",
-  messagingSenderId: "000000000000",
-  appId: "1:000000000000:web:xxxxxxxxxxxxxxxx"
+  apiKey: "AIzaSyB4_emQyAaluMslxOzQ_Q4-BEz1dZ21T7k",
+  authDomain: "workin-java.firebaseapp.com",
+  databaseURL: "https://workin-java-default-rtdb.firebaseio.com",
+  projectId: "workin-java",
+  storageBucket: "workin-java.firebasestorage.app",
+  messagingSenderId: "1031747973241",
+  appId: "1:1031747973241:web:2d072365da150904f8e4a8"
 };
+
 
 const ADMIN_EMAIL = "admin@admin.com";
 
