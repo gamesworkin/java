@@ -3,13 +3,13 @@
    1) COLE AQUI SUAS CREDENCIAIS DO FIREBASE (Authentication + Realtime Database)
    ========================================================================== */
 const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",       // obrigatório para Realtime Database
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyB4_emQyAaluMslxOzQ_Q4-BEz1dZ21T7k",
+  authDomain: "workin-java.firebaseapp.com",
+  databaseURL: "https://workin-java-default-rtdb.firebaseio.com",
+  projectId: "workin-java",
+  storageBucket: "workin-java.firebasestorage.app",
+  messagingSenderId: "1031747973241",
+  appId: "1:1031747973241:web:2d072365da150904f8e4a8"
 };
 
 /* Caminho do MicroEmulator (implementação MIDP/J2ME em Java) executado pelo CheerpJ.
