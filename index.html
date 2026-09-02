@@ -1,190 +1,234 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>RetroJava Arcade — Emulador de Jogos Java Antigos</title>
-<meta name="description" content="Emule seus jogos Java (J2ME) favoritos direto no navegador. Suba sua ROM ou jogue as clássicas selecionadas." />
+<title id="pageTitle">J2ME Arcade — Emulador Java Online</title>
+<meta name="description" id="metaDesc" content="Emulador J2ME online e gratuito: envie sua própria ROM .jar ou jogue os títulos independentes do acervo." />
+<meta property="og:title" content="J2ME Arcade — Emulador Java Online" />
+<meta property="og:description" content="Jogue jogos Java J2ME direto no navegador." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" id="faviconLink" href="favicon.ico" />
 <link rel="stylesheet" href="style.css" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- CheerpJ: máquina virtual Java no navegador (roda o MicroEmulator/MIDP) -->
+<script src="https://cjrtnc.leaningtech.com/3.0/cj3loader.js"></script>
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="site-header">
-  <div class="brand">
-    <span class="logo-dot"></span>
-    <h1>Retro<span>Java</span></h1>
-  </div>
-  <nav id="mainMenu" class="main-menu"><!-- itens dinâmicos --></nav>
-  <div class="header-actions">
-    <button id="loginBtn" class="btn ghost">Admin</button>
+  <div class="bar">
+    <a class="brand" href="#top">
+      <img id="logoSquare" class="logo-sq" alt="Logo" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111'/%3E%3Ctext x='32' y='42' font-size='28' text-anchor='middle' fill='%2300e5a0' font-family='monospace'%3EJ2%3C/text%3E%3C/svg%3E" />
+      <img id="logoWide" class="logo-wide" alt="" src="" hidden />
+      <span id="brandText" class="brand-text">J2ME Arcade</span>
+    </a>
+
+    <button class="hamburger" id="hamburger" aria-label="Abrir menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="nav" id="nav">
+      <ul class="menu">
+        <li><a href="#top">Início</a></li>
+        <li class="has-sub">
+          <a href="#games">Jogos ▾</a>
+          <ul class="submenu">
+            <li><a href="#games" data-cat="Ação">Ação</a></li>
+            <li><a href="#games" data-cat="Aventura">Aventura</a></li>
+            <li><a href="#games" data-cat="Puzzle">Puzzle</a></li>
+            <li><a href="#games" data-cat="Corrida">Corrida</a></li>
+            <li><a href="#games" data-cat="">Todos</a></li>
+          </ul>
+        </li>
+        <li class="has-sub">
+          <a href="#emulator">Emulador ▾</a>
+          <ul class="submenu">
+            <li><a href="#emulator">Enviar minha ROM</a></li>
+            <li><a href="#emulator" id="navFullscreen">Tela cheia</a></li>
+            <li><a href="#help">Como funciona</a></li>
+          </ul>
+        </li>
+        <li class="has-sub">
+          <a href="#help">Ajuda ▾</a>
+          <ul class="submenu">
+            <li><a href="#help">FAQ</a></li>
+            <li><a href="#help">Formatos suportados</a></li>
+            <li><a href="#" id="openAdmin">Área restrita</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
   </div>
 </header>
 
-<!-- MAIN -->
-<main class="container">
-
-  <section class="top-section">
-    <!-- PHONE -->
-    <div class="phone-wrap">
-      <div class="phone" id="phone">
-        <div class="phone-notch"></div>
-        <div class="phone-screen" id="phoneScreen">
-          <div class="screen-placeholder">
-            <p>Selecione um jogo</p>
-            <small>ou suba sua ROM .jar / .jad</small>
+<main id="top">
+  <section class="hero">
+    <!-- Emulador estilo celular -->
+    <div class="phone-wrap" id="emulator">
+      <div class="phone">
+        <div class="phone-top"><span class="speaker"></span></div>
+        <div class="phone-screen">
+          <div id="emuPlaceholder" class="emu-placeholder">
+            <strong>Emulador J2ME</strong>
+            <p>Envie um arquivo <code>.jar</code> ou inicie um jogo do acervo.</p>
+            <div class="spinner" id="emuSpinner" hidden></div>
+            <p class="emu-status" id="emuStatus"></p>
           </div>
+          <div id="cheerpjDisplay" class="cheerpj-display"></div>
         </div>
-        <div class="phone-controls">
-          <div class="dpad">
-            <button data-key="up">▲</button>
-            <button data-key="left">◀</button>
-            <button data-key="fire">●</button>
-            <button data-key="right">▶</button>
-            <button data-key="down">▼</button>
-          </div>
-          <div class="side-btns">
-            <button data-key="a" class="ab">A</button>
-            <button data-key="b" class="ab">B</button>
-          </div>
+        <div class="phone-keys">
+          <button class="key" data-key="ArrowUp">▲</button>
+          <button class="key" data-key="ArrowLeft">◀</button>
+          <button class="key" data-key="Enter">OK</button>
+          <button class="key" data-key="ArrowRight">▶</button>
+          <button class="key" data-key="ArrowDown">▼</button>
         </div>
-        <div class="phone-bottom">
-          <button id="fullscreenBtn" class="btn small">Full Screen</button>
-          <label class="btn small file-btn">
-            Subir ROM
-            <input type="file" id="romInput" accept=".jar,.jad" hidden />
-          </label>
-        </div>
+      </div>
+      <div class="emu-actions">
+        <label class="btn primary">
+          Enviar ROM (.jar)
+          <input type="file" id="romInput" accept=".jar,.jad" hidden />
+        </label>
+        <button class="btn" id="btnStop">Parar</button>
+        <button class="btn" id="btnFullscreen">Tela cheia</button>
+        <p class="rom-name" id="romName"></p>
       </div>
     </div>
 
-    <!-- BANNER -->
-    <aside class="banner-area" id="bannerArea">
-      <!-- banners dinâmicos -->
-    </aside>
-  </section>
-
-  <!-- FILTER -->
-  <section class="filters">
-    <h2>Jogos disponíveis</h2>
-    <div class="filter-controls">
-      <input type="search" id="searchInput" placeholder="Buscar jogo..." />
-      <select id="categoryFilter"><option value="">Todas categorias</option></select>
+    <!-- Boas-vindas -->
+    <div class="welcome">
+      <h1 id="siteTitle">J2ME Arcade</h1>
+      <p class="subtitle" id="siteSubtitle">Emulador livre de jogos Java para celular, direto no navegador</p>
+      <div class="welcome-text" id="welcomeText">
+        <p>Bem-vindo! Aqui você joga clássicos e títulos independentes em J2ME sem instalar nada.
+        Faça o upload da sua própria ROM ou escolha um jogo do acervo abaixo.</p>
+      </div>
+      <div class="search-box">
+        <input type="search" id="searchInput" placeholder="Pesquisar jogos por título, categoria ou ano…" />
+      </div>
+      <p class="hint" id="help">Suporta arquivos MIDP/CLDC <code>.jar</code>. Seus arquivos não saem do seu navegador.</p>
     </div>
   </section>
 
-  <!-- GAME GRID -->
-  <section class="games-grid" id="gamesGrid"></section>
-
+  <section class="games" id="games">
+    <div class="games-head">
+      <h2>Acervo de jogos</h2>
+      <span class="count" id="gamesCount"></span>
+    </div>
+    <div class="grid" id="gamesGrid"></div>
+    <div class="empty" id="gamesEmpty" hidden>Nenhum jogo encontrado.</div>
+    <nav class="pagination" id="pagination"></nav>
+  </section>
 </main>
 
-<!-- FOOTER -->
 <footer class="site-footer">
-  <p>© <span id="year"></span> RetroJava Arcade — Feito com nostalgia.</p>
+  <p>© <span id="year"></span> <span id="footerBrand">J2ME Arcade</span> — projeto livre. <a href="#" id="openAdmin2">Área restrita</a></p>
 </footer>
 
-<!-- GAME MODAL -->
+<button class="theme-fab" id="themeFab" title="Alternar tema">🌙</button>
+
+<!-- Modal detalhes do jogo -->
 <div class="modal" id="gameModal" hidden>
-  <div class="modal-content">
-    <button class="modal-close" data-close>&times;</button>
-    <img id="modalCover" alt="" />
-    <div class="modal-body">
-      <h3 id="modalTitle"></h3>
-      <div class="badges">
-        <span id="modalCategory"></span>
-        <span id="modalSubcategory"></span>
-      </div>
-      <p id="modalDescription"></p>
-      <button id="playNowBtn" class="btn primary big">Jogar agora!</button>
+  <div class="modal-box">
+    <button class="modal-close" data-close>×</button>
+    <div class="modal-body" id="gameModalBody"></div>
+    <div class="modal-foot">
+      <button class="btn primary" id="btnPlay">▶ Iniciar game</button>
     </div>
   </div>
 </div>
 
-<!-- LOGIN MODAL -->
+<!-- Modal login -->
 <div class="modal" id="loginModal" hidden>
-  <div class="modal-content small">
-    <button class="modal-close" data-close>&times;</button>
-    <h3>Login Admin</h3>
-    <form id="loginForm">
-      <input type="email" id="loginEmail" placeholder="Email" required />
-      <input type="password" id="loginPassword" placeholder="Senha" required />
-      <button type="submit" class="btn primary">Entrar</button>
-      <p class="error" id="loginError"></p>
+  <div class="modal-box small">
+    <button class="modal-close" data-close>×</button>
+    <h3>Área restrita</h3>
+    <form id="loginForm" class="form">
+      <label>E-mail<input type="email" id="loginEmail" required /></label>
+      <label>Senha<input type="password" id="loginPass" required /></label>
+      <p class="err" id="loginErr"></p>
+      <button class="btn primary" type="submit">Entrar</button>
     </form>
   </div>
 </div>
 
-<!-- ADMIN PANEL -->
+<!-- Modal administrativo -->
 <div class="modal" id="adminModal" hidden>
-  <div class="modal-content large">
-    <button class="modal-close" data-close>&times;</button>
-    <h3>Painel do Administrador</h3>
-    <div class="admin-tabs">
-      <button class="tab-btn active" data-tab="games">Jogos</button>
-      <button class="tab-btn" data-tab="menu">Menu</button>
-      <button class="tab-btn" data-tab="banners">Banners</button>
-      <button id="logoutBtn" class="btn ghost right">Sair</button>
+  <div class="modal-box wide">
+    <button class="modal-close" data-close>×</button>
+    <div class="admin-head">
+      <h3>Painel administrativo</h3>
+      <div>
+        <span class="admin-user" id="adminUser"></span>
+        <button class="btn small" id="btnLogout">Sair</button>
+      </div>
     </div>
 
-    <!-- Games tab -->
-    <div class="tab-panel active" data-panel="games">
-      <form id="gameForm" class="admin-form">
+    <div class="tabs">
+      <button class="tab active" data-tab="tabGames">Jogos</button>
+      <button class="tab" data-tab="tabForm">Cadastrar / Editar</button>
+      <button class="tab" data-tab="tabSite">Aparência</button>
+      <button class="tab" data-tab="tabBackup">Backup</button>
+    </div>
+
+    <div class="tab-panel active" id="tabGames">
+      <input type="search" id="adminSearch" placeholder="Filtrar jogos…" class="input" />
+      <div class="admin-list" id="adminList"></div>
+    </div>
+
+    <div class="tab-panel" id="tabForm">
+      <form id="gameForm" class="form grid2">
         <input type="hidden" id="gameId" />
-        <input id="gameCover" placeholder="URL da capa/screenshot" required />
-        <input id="gameTitle" placeholder="Título" required />
-        <textarea id="gameDescription" placeholder="Descrição" required></textarea>
-        <div class="row">
-          <input id="gameCategory" placeholder="Categoria" required />
-          <input id="gameSubcategory" placeholder="Subcategoria" />
-        </div>
-        <input id="gameLink" placeholder="Link do jogo (URL)" required />
-        <div class="row">
-          <button type="submit" class="btn primary">Salvar</button>
-          <button type="button" id="gameFormReset" class="btn ghost">Limpar</button>
+        <label>Título<input id="gTitle" required /></label>
+        <label>Categoria<input id="gCategory" list="catList" required /><datalist id="catList"></datalist></label>
+        <label>Ano de lançamento<input id="gYear" type="number" min="1997" max="2099" /></label>
+        <label>Capa (URL da imagem)<input id="gCover" type="url" /></label>
+        <label class="full">Link do arquivo Java (.jar)<input id="gJar" type="url" required /></label>
+        <label class="full">Descrição<textarea id="gDesc" rows="4"></textarea></label>
+        <div class="full row">
+          <button class="btn primary" type="submit">Salvar jogo</button>
+          <button class="btn" type="button" id="btnResetForm">Limpar</button>
         </div>
       </form>
-      <ul id="adminGamesList" class="admin-list"></ul>
     </div>
 
-    <!-- Menu tab -->
-    <div class="tab-panel" data-panel="menu">
-      <form id="menuForm" class="admin-form">
-        <input type="hidden" id="menuId" />
-        <input id="menuLabel" placeholder="Nome do item" required />
-        <input id="menuUrl" placeholder="URL (ex: #, https://...)" required />
-        <div class="row">
-          <button type="submit" class="btn primary">Salvar</button>
-          <button type="button" id="menuFormReset" class="btn ghost">Limpar</button>
-        </div>
+    <div class="tab-panel" id="tabSite">
+      <form id="siteForm" class="form grid2">
+        <label>Título do site<input id="sTitle" /></label>
+        <label>Subtítulo<input id="sSubtitle" /></label>
+        <label>Logo quadrada (URL)<input id="sLogoSquare" /></label>
+        <label>Logo por extenso (URL)<input id="sLogoWide" /></label>
+        <label>Favicon (URL)<input id="sFavicon" /></label>
+        <label>Tema padrão do site
+          <select id="sTheme">
+            <option value="dark">Escuro</option>
+            <option value="light">Claro</option>
+            <option value="cyberpunk">Cyberpunk</option>
+          </select>
+        </label>
+        <label class="full">Texto de boas-vindas<textarea id="sWelcome" rows="4"></textarea></label>
+        <div class="full row"><button class="btn primary" type="submit">Salvar aparência</button></div>
       </form>
-      <ul id="adminMenuList" class="admin-list"></ul>
     </div>
 
-    <!-- Banners tab -->
-    <div class="tab-panel" data-panel="banners">
-      <form id="bannerForm" class="admin-form">
-        <input type="hidden" id="bannerId" />
-        <input id="bannerTitle" placeholder="Título do banner" />
-        <textarea id="bannerText" placeholder="Texto/descrição"></textarea>
-        <input id="bannerImage" placeholder="URL da imagem (opcional)" />
-        <input id="bannerButtonLabel" placeholder="Texto do botão (opcional)" />
-        <input id="bannerButtonUrl" placeholder="URL do botão (opcional)" />
-        <div class="row">
-          <button type="submit" class="btn primary">Salvar</button>
-          <button type="button" id="bannerFormReset" class="btn ghost">Limpar</button>
-        </div>
-      </form>
-      <ul id="adminBannersList" class="admin-list"></ul>
+    <div class="tab-panel" id="tabBackup">
+      <p class="hint">Exporte um JSON com jogos + configurações, ou importe um backup.</p>
+      <div class="row">
+        <button class="btn primary" id="btnExport">⬇ Exportar backup</button>
+        <label class="btn">⬆ Importar backup<input type="file" id="importInput" accept="application/json" hidden /></label>
+      </div>
+      <p class="err" id="backupMsg"></p>
     </div>
   </div>
 </div>
 
-<!-- Firebase SDK (compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<div class="toast" id="toast" hidden></div>
+
 <script src="app.js"></script>
 </body>
 </html>
