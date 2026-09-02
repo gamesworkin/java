@@ -61,12 +61,14 @@ main{max-width:1200px;margin:auto;padding:26px 16px 60px}
   border-radius:30px;padding:14px;box-shadow:var(--shadow)}
 .phone-top{display:flex;justify-content:center;padding-bottom:8px}
 .speaker{width:52px;height:5px;border-radius:5px;background:var(--border)}
-.phone-screen{position:relative;aspect-ratio:3/4;background:#000;border-radius:14px;overflow:hidden;
+.phone-screen{position:relative;aspect-ratio:360/540;min-height:520px;min-width:340px;background:#000;border-radius:14px;overflow:hidden;
   border:1px solid var(--border)}
-.cheerpj-display{position:absolute;inset:0;display:none}
+.cheerpj-display{position:absolute;inset:0;display:none;background:#000;overflow:hidden}
+.emu-placeholder.faded{opacity:0}
+.cheerpj-display canvas{display:block;margin:0 auto;outline:none}
 .cheerpj-display.active{display:block}
-.cheerpj-display canvas,.cheerpj-display iframe{width:100%!important;height:100%!important}
-.emu-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;gap:6px;align-items:center;
+
+.emu-placeholder{position:absolute;inset:0;pointer-events:none;transition:opacity .3s ease;display:flex;flex-direction:column;gap:6px;align-items:center;
   justify-content:center;text-align:center;padding:18px;color:#cfe;font-size:.88rem}
 .emu-placeholder strong{color:var(--primary);font-family:var(--mono);letter-spacing:1px}
 .emu-status{font-size:.78rem;color:#8fb}
@@ -170,7 +172,7 @@ main{max-width:1200px;margin:auto;padding:26px 16px 60px}
 /* ============ Responsivo ============ */
 @media (max-width:900px){
   .hero{grid-template-columns:1fr}
-  .phone-wrap{max-width:360px;margin:auto}
+  .phone-wrap{max-width:400px;margin:auto}
   .form.grid2{grid-template-columns:1fr}
   .game-detail{grid-template-columns:1fr}
   .hamburger{display:flex}
@@ -182,3 +184,17 @@ main{max-width:1200px;margin:auto;padding:26px 16px 60px}
     background:transparent;padding:0 0 6px 14px;display:none}
   .has-sub.open>.submenu{display:block}
 }
+
+/* ============ Micro botão da área restrita ============ */
+.admin-dot{position:fixed;right:10px;bottom:10px;z-index:70;width:12px;height:12px;padding:0;
+  border:0;border-radius:50%;background:var(--muted);opacity:.14;cursor:pointer;
+  transition:opacity .25s ease,transform .25s ease}
+.admin-dot:hover,.admin-dot:focus-visible{opacity:.7;transform:scale(1.25);outline:none}
+
+/* ============ Botão com spinner ============ */
+.btn[data-loading="true"]{pointer-events:none;opacity:.75}
+.btn-spin{display:none;width:15px;height:15px;border:2px solid rgba(255,255,255,.35);
+  border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite;
+  vertical-align:-3px;margin-right:8px}
+.btn[data-loading="true"] .btn-spin{display:inline-block}
+.login-note{color:var(--muted);font-size:.78rem;margin:0 0 10px}

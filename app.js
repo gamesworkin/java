@@ -15,6 +15,9 @@ const firebaseConfig = {
 /* Caminho do MicroEmulator (implementação MIDP/J2ME em Java) executado pelo CheerpJ.
    Baixe o microemulator.jar e coloque em ./lib/ (veja README.md). */
 const MICROEMULATOR_JAR = "lib/microemulator.jar";
+
+/* Único e-mail com poderes de administrador. Qualquer outra conta é recusada. */
+const ADMIN_EMAIL = "admin@admin.com";
 const GAMES_PER_PAGE = 15;
 
 /* ==========================================================================
@@ -140,14 +143,20 @@ function initFirebase() {
       if (snap.val()) siteConfig = { ...siteConfig, ...snap.val() };
       applySiteConfig();
     });
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        $("#adminUser").textContent = user.email;
-        closeModal($("#loginModal"));
-        openModal($("#adminModal"));
-        renderAdminList();
-        fillSiteForm();
+    auth.onAuthStateChanged(async user => {
+      if (!user) return;
+      // Somente admin@admin.com é administrador. Qualquer outra conta é desconectada.
+      if ((user.email || "").toLowerCase() !== ADMIN_EMAIL) {
+        await auth.signOut();
+        $("#loginErr").textContent = "Esta conta não tem permissão de administrador.";
+        toast("Acesso negado: apenas " + ADMIN_EMAIL + " é administrador.");
+        return;
       }
+      $("#adminUser").textContent = user.email;
+      closeModal($("#loginModal"));
+      openModal($("#adminModal"));
+      renderAdminList();
+      fillSiteForm();
     });
     return true;
   } catch (e) {
@@ -336,35 +345,74 @@ $("#btnPlay").addEventListener("click", async () => {
 /* ==========================================================================
    8) Emulador J2ME (CheerpJ + MicroEmulator) — ROM sempre na RAM
    ========================================================================== */
+let cheerpjBooting = null;   // promise única de inicialização
 let cheerpjReady = false;
 let running = false;
+let romCounter = 0;
 
 function emuStatus(msg, spinning = false) {
   $("#emuStatus").textContent = msg || "";
   $("#emuSpinner").hidden = !spinning;
 }
 
+/* Tamanho real (em px) da "tela do celular". O CheerpJ precisa de um
+   container VISÍVEL e com tamanho > 0 no momento da criação do display,
+   caso contrário o canvas nasce 0x0 e a tela fica preta. */
+function displayBox() {
+  const r = $(".phone-screen").getBoundingClientRect();
+  return {
+    w: Math.max(350, Math.round(r.width) || 350),
+    h: Math.max(520, Math.round(r.height) || 520)
+  };
+}
+
 async function ensureCheerpJ() {
-  if (cheerpjReady) return;
-  emuStatus("Inicializando máquina virtual Java…", true);
-  await cheerpjInit({ enableInputMethods: true, javaProperties: [] });
-  cheerpjCreateDisplay(-1, -1, $("#cheerpjDisplay"));
-  cheerpjReady = true;
-  emuStatus("");
+  if (cheerpjBooting) return cheerpjBooting;
+  cheerpjBooting = (async () => {
+    emuStatus("Inicializando máquina virtual Java…", true);
+
+    // 1) torna o container visível ANTES de criar o display
+    const disp = $("#cheerpjDisplay");
+    disp.classList.add("active");
+    disp.style.visibility = "visible";
+
+    // 2) espera um frame para o layout aplicar o tamanho
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    await cheerpjInit({ enableInputMethods: true, clipboardMode: "system" });
+
+    // 3) display com tamanho EXPLÍCITO em pixels (nunca -1 aqui)
+    const { w, h } = displayBox();
+    cheerpjCreateDisplay(w, h, disp);
+    cheerpjReady = true;
+    emuStatus("");
+  })();
+  return cheerpjBooting;
+}
+
+/* Grava a ROM no filesystem virtual (API nova com fallback para a antiga) */
+function addRomToVFS(path, bytes) {
+  if (typeof cheerpOSAddStringFile === "function") cheerpOSAddStringFile(path, bytes);
+  else cheerpjAddStringFile(path, bytes);
 }
 
 /** Recebe bytes (Uint8Array) da ROM, monta no filesystem virtual e roda. */
 async function bootRom(bytes, label) {
+  if (running) {
+    toast("Recarregando o emulador para trocar de jogo…");
+    sessionStorage.setItem("j2me.reloadMsg", "Selecione o jogo novamente para iniciar.");
+    location.reload();
+    return;
+  }
   try {
     $("#romName").textContent = "Carregado: " + label;
     await ensureCheerpJ();
     emuStatus("Carregando " + label + "…", true);
 
-    const vpath = "/str/game.jar";
-    cheerpjAddStringFile(vpath, bytes);
+    const vpath = "/str/rom" + ++romCounter + ".jar";
+    addRomToVFS(vpath, bytes);
 
-    $("#emuPlaceholder").style.opacity = "0";
-    $("#cheerpjDisplay").classList.add("active");
+    $("#emuPlaceholder").classList.add("faded");
     running = true;
 
     // MicroEmulator fornece a implementação MIDP/CLDC para o .jar do jogo
@@ -376,9 +424,8 @@ async function bootRom(bytes, label) {
   } catch (err) {
     console.error(err);
     running = false;
-    $("#emuPlaceholder").style.opacity = "1";
-    $("#cheerpjDisplay").classList.remove("active");
-    emuStatus("Não foi possível iniciar. Verifique o arquivo .jar e o microemulator.jar em /lib.");
+    $("#emuPlaceholder").classList.remove("faded");
+    emuStatus("Não foi possível iniciar. Confira o .jar do jogo e o arquivo lib/microemulator.jar.");
     toast("Erro ao iniciar o emulador.");
   }
 }
@@ -387,10 +434,10 @@ async function bootRom(bytes, label) {
 $("#romInput").addEventListener("change", async e => {
   const file = e.target.files?.[0];
   if (!file) return;
-  emuStatus("Enviando arquivo…", true);
+  emuStatus("Lendo arquivo…", true);
   const buf = await file.arrayBuffer();
-  await new Promise(r => setTimeout(r, 500)); // sensação de upload
   await bootRom(new Uint8Array(buf), file.name);
+  e.target.value = "";
 });
 
 async function playFromUrl(url, label) {
@@ -407,14 +454,12 @@ async function playFromUrl(url, label) {
   }
 }
 
+/* A máquina virtual não pode ser reinicializada na mesma página:
+   parar = recarregar em estado limpo. */
 $("#btnStop").addEventListener("click", () => {
-  running = false;
-  $("#cheerpjDisplay").classList.remove("active");
-  $("#cheerpjDisplay").innerHTML = "";
-  cheerpjReady = false;
-  $("#emuPlaceholder").style.opacity = "1";
-  $("#romName").textContent = "";
-  emuStatus("Emulador parado. Recarregue uma ROM para jogar.");
+  if (!running && !cheerpjReady) return toast("O emulador não está rodando.");
+  sessionStorage.setItem("j2me.reloadMsg", "Emulador parado. Carregue uma ROM para jogar.");
+  location.reload();
 });
 
 const goFullscreen = () => {
@@ -424,16 +469,24 @@ const goFullscreen = () => {
 $("#btnFullscreen").addEventListener("click", goFullscreen);
 $("#navFullscreen").addEventListener("click", e => { e.preventDefault(); goFullscreen(); });
 
-/* Teclado virtual do "celular" */
+/* Teclado virtual do "celular" — envia direto ao canvas do CheerpJ */
 $$(".key").forEach(k =>
   k.addEventListener("click", () => {
     const target = $("#cheerpjDisplay canvas") || $("#cheerpjDisplay");
+    target.focus?.();
     const key = k.dataset.key;
+    const codes = { ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39, Enter: 13 };
     ["keydown", "keyup"].forEach(type =>
-      target.dispatchEvent(new KeyboardEvent(type, { key, code: key, bubbles: true }))
+      target.dispatchEvent(
+        new KeyboardEvent(type, { key, code: key, keyCode: codes[key], which: codes[key], bubbles: true })
+      )
     );
   })
 );
+
+/* mensagem depois de um reload provocado pelo botão Parar/trocar jogo */
+const reloadMsg = sessionStorage.getItem("j2me.reloadMsg");
+if (reloadMsg) { sessionStorage.removeItem("j2me.reloadMsg"); emuStatus(reloadMsg); }
 
 /* ==========================================================================
    9) Menu (desktop hover via CSS / mobile hambúrguer)
@@ -458,37 +511,81 @@ $$(".nav a:not(.has-sub > a)").forEach(a =>
 /* ==========================================================================
    10) Autenticação + Painel administrativo
    ========================================================================== */
+function isAdmin() {
+  return !!(fbReady && auth?.currentUser && (auth.currentUser.email || "").toLowerCase() === ADMIN_EMAIL);
+}
+
 function openAdminArea(e) {
   e?.preventDefault();
   $("#nav").classList.remove("open");
-  if (fbReady && auth?.currentUser) {
+  if (isAdmin()) {
     $("#adminUser").textContent = auth.currentUser.email;
     openModal($("#adminModal"));
     renderAdminList();
     fillSiteForm();
-  } else if (fbReady) {
-    openModal($("#loginModal"));
-  } else {
-    // modo demo local
-    $("#adminUser").textContent = "modo local (sem Firebase)";
-    openModal($("#adminModal"));
-    renderAdminList();
-    fillSiteForm();
+    return;
   }
+  // sem sessão de admin -> modal de login
+  $("#loginErr").textContent = "";
+  $("#loginForm").reset();
+  openModal($("#loginModal"));
+  setTimeout(() => $("#loginEmail").focus(), 60);
 }
 $("#openAdmin").addEventListener("click", openAdminArea);
-$("#openAdmin2").addEventListener("click", openAdminArea);
+
+/* Login: Enter envia o formulário (nativo) e também a partir de qualquer campo */
+$$("#loginForm input").forEach(inp =>
+  inp.addEventListener("keydown", ev => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      $("#loginForm").requestSubmit();
+    }
+  })
+);
+
+function setLoginLoading(on) {
+  const btn = $("#loginSubmit");
+  btn.dataset.loading = on ? "true" : "false";
+  btn.disabled = on;
+  $("#loginBtnLabel").textContent = on ? "Entrando…" : "Entrar";
+  $$("#loginForm input").forEach(i => (i.disabled = on));
+}
 
 $("#loginForm").addEventListener("submit", async e => {
   e.preventDefault();
+  if ($("#loginSubmit").dataset.loading === "true") return;
   $("#loginErr").textContent = "";
+
+  const email = $("#loginEmail").value.trim().toLowerCase();
+  const pass = $("#loginPass").value;
+
+  if (!fbReady || !auth) {
+    $("#loginErr").textContent = "Firebase não configurado — login indisponível.";
+    return;
+  }
+  if (email !== ADMIN_EMAIL) {
+    $("#loginErr").textContent = "Apenas o administrador (" + ADMIN_EMAIL + ") pode entrar.";
+    return;
+  }
+
+  setLoginLoading(true);
   try {
-    await auth.signInWithEmailAndPassword($("#loginEmail").value, $("#loginPass").value);
+    await auth.signInWithEmailAndPassword(email, pass);
     toast("Bem-vindo, admin!");
   } catch (err) {
-    $("#loginErr").textContent = "Falha no login: " + (err.code || err.message);
+    const map = {
+      "auth/invalid-credential": "E-mail ou senha incorretos.",
+      "auth/wrong-password": "Senha incorreta.",
+      "auth/user-not-found": "Usuário não encontrado.",
+      "auth/too-many-requests": "Muitas tentativas. Tente novamente em instantes.",
+      "auth/network-request-failed": "Sem conexão com o servidor."
+    };
+    $("#loginErr").textContent = map[err.code] || "Falha no login: " + (err.code || err.message);
+  } finally {
+    setLoginLoading(false);
   }
 });
+
 $("#btnLogout").addEventListener("click", async () => {
   if (fbReady && auth) await auth.signOut();
   closeModal($("#adminModal"));

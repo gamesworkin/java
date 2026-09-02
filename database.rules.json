@@ -1,0 +1,35 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "games": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email.lower() === 'admin@admin.com'",
+      "$gameId": {
+        ".validate": "newData.hasChildren(['title'])",
+        "title":       { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+        "category":    { ".validate": "newData.isString() && newData.val().length <= 60" },
+        "year":        { ".validate": "newData.isNumber() || newData.val() == null" },
+        "cover":       { ".validate": "newData.isString() && newData.val().length <= 2000" },
+        "jar":         { ".validate": "newData.isString() && newData.val().length <= 2000" },
+        "description": { ".validate": "newData.isString() && newData.val().length <= 5000" },
+        "createdAt":   { ".validate": "newData.isNumber()" },
+        "$other":      { ".validate": false }
+      }
+    },
+
+    "config": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email.lower() === 'admin@admin.com'",
+      "title":      { ".validate": "newData.isString() && newData.val().length <= 120" },
+      "subtitle":   { ".validate": "newData.isString() && newData.val().length <= 300" },
+      "welcome":    { ".validate": "newData.isString() && newData.val().length <= 5000" },
+      "logoSquare": { ".validate": "newData.isString() && newData.val().length <= 2000" },
+      "logoWide":   { ".validate": "newData.isString() && newData.val().length <= 2000" },
+      "favicon":    { ".validate": "newData.isString() && newData.val().length <= 2000" },
+      "theme":      { ".validate": "newData.isString() && newData.val().matches(/^(dark|light|cyberpunk)$/)" },
+      "$other":     { ".validate": false }
+    }
+  }
+}

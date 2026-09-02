@@ -58,7 +58,6 @@
           <ul class="submenu">
             <li><a href="#help">FAQ</a></li>
             <li><a href="#help">Formatos suportados</a></li>
-            <li><a href="#" id="openAdmin">Área restrita</a></li>
           </ul>
         </li>
       </ul>
@@ -127,10 +126,13 @@
 </main>
 
 <footer class="site-footer">
-  <p>© <span id="year"></span> <span id="footerBrand">J2ME Arcade</span> — projeto livre. <a href="#" id="openAdmin2">Área restrita</a></p>
+  <p>© <span id="year"></span> <span id="footerBrand">J2ME Arcade</span> — projeto livre.</p>
 </footer>
 
 <button class="theme-fab" id="themeFab" title="Alternar tema">🌙</button>
+
+<!-- Micro botão discreto da área restrita (canto inferior direito) -->
+<button class="admin-dot" id="openAdmin" aria-label="Área restrita" title=""></button>
 
 <!-- Modal detalhes do jogo -->
 <div class="modal" id="gameModal" hidden>
@@ -148,11 +150,12 @@
   <div class="modal-box small">
     <button class="modal-close" data-close>×</button>
     <h3>Área restrita</h3>
+    <p class="login-note">Acesso exclusivo do administrador (admin@admin.com).</p>
     <form id="loginForm" class="form">
-      <label>E-mail<input type="email" id="loginEmail" required /></label>
-      <label>Senha<input type="password" id="loginPass" required /></label>
+      <label>E-mail<input type="email" id="loginEmail" autocomplete="username" enterkeyhint="next" required /></label>
+      <label>Senha<input type="password" id="loginPass" autocomplete="current-password" enterkeyhint="go" required /></label>
       <p class="err" id="loginErr"></p>
-      <button class="btn primary" type="submit">Entrar</button>
+      <button class="btn primary" id="loginSubmit" type="submit"><span class="btn-spin"></span><span id="loginBtnLabel">Entrar</span></button>
     </form>
   </div>
 </div>
