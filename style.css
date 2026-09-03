@@ -47,7 +47,7 @@ img{max-width:100%;display:block}
 
 /* ============ Layout ============ */
 main{max-width:1200px;margin:auto;padding:26px 16px 60px}
-.hero{display:grid;grid-template-columns:340px 1fr;gap:28px;align-items:start}
+.hero{display:grid;grid-template-columns:330px 1fr;gap:28px;align-items:start}
 .welcome h1{margin:.1em 0 .1em;font-size:clamp(1.8rem,4vw,2.7rem);line-height:1.1}
 .subtitle{color:var(--primary);font-weight:600;margin:0 0 14px}
 .welcome-text{color:var(--muted)}
@@ -61,11 +61,12 @@ main{max-width:1200px;margin:auto;padding:26px 16px 60px}
   border-radius:30px;padding:14px;box-shadow:var(--shadow)}
 .phone-top{display:flex;justify-content:center;padding-bottom:8px}
 .speaker{width:52px;height:5px;border-radius:5px;background:var(--border)}
-.phone-screen{position:relative;aspect-ratio:360/540;min-height:520px;min-width:340px;background:#000;border-radius:14px;overflow:hidden;
-  border:1px solid var(--border)}
-.cheerpj-display{position:absolute;inset:0;display:none;background:#000;overflow:hidden}
+.phone-screen{position:relative;width:300px;height:600px;margin:0 auto;background:#000;
+  border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+.cheerpj-display{position:absolute;top:0;left:0;width:300px;height:600px;display:none;background:#000;
+  overflow:hidden;transform-origin:top left}
 .emu-placeholder.faded{opacity:0}
-.cheerpj-display canvas{display:block;margin:0 auto;outline:none}
+.cheerpj-display canvas{display:block;margin:0;outline:none}
 .cheerpj-display.active{display:block}
 
 .emu-placeholder{position:absolute;inset:0;pointer-events:none;transition:opacity .3s ease;display:flex;flex-direction:column;gap:6px;align-items:center;
@@ -75,7 +76,8 @@ main{max-width:1200px;margin:auto;padding:26px 16px 60px}
 .spinner{width:26px;height:26px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--primary);
   border-radius:50%;animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.phone-keys{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
+.phone-hint{margin:12px 2px 0;font-size:.78rem;color:var(--muted);text-align:center}
+.phone-hint b{color:var(--primary)}
 .key{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;
   padding:10px 0;cursor:pointer;font-size:.85rem}
 .key:active{background:var(--primary);color:var(--primary-fg)}
@@ -172,7 +174,7 @@ main{max-width:1200px;margin:auto;padding:26px 16px 60px}
 /* ============ Responsivo ============ */
 @media (max-width:900px){
   .hero{grid-template-columns:1fr}
-  .phone-wrap{max-width:400px;margin:auto}
+  .phone-wrap{max-width:330px;margin:auto}
   .form.grid2{grid-template-columns:1fr}
   .game-detail{grid-template-columns:1fr}
   .hamburger{display:flex}
@@ -198,3 +200,12 @@ main{max-width:1200px;margin:auto;padding:26px 16px 60px}
   vertical-align:-3px;margin-right:8px}
 .btn[data-loading="true"] .btn-spin{display:inline-block}
 .login-note{color:var(--muted);font-size:.78rem;margin:0 0 10px}
+
+/* ==== Emulador em tela cheia: centraliza a janela do MicroEmulator ==== */
+.phone-screen:fullscreen{width:100vw;height:100vh;border-radius:0;
+  display:grid;place-items:center}
+.phone-screen:fullscreen .cheerpj-display{position:relative}
+@media (max-width:360px){
+  main{padding-left:8px;padding-right:8px}
+  .phone{padding:6px;border-radius:22px}
+}

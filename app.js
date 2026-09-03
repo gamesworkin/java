@@ -182,7 +182,20 @@ const saveLocal = () => {
 
 function demoGames() {
   const cats = ["Ação", "Aventura", "Puzzle", "Corrida", "RPG"];
-  return Array.from({ length: 18 }, (_, i) => ({
+  const builtIn = [
+    {
+      id: "diamond-rush",
+      title: "Diamond Rush",
+      category: "Aventura",
+      year: 2008,
+      cover: "",
+      jar: "roms/DR.jar",
+      description:
+        "Explore templos, resolva puzzles e colete diamantes neste clássico de aventura J2ME. Jogo incluído no acervo e pronto para rodar no navegador.",
+      createdAt: Date.now() + 1000
+    }
+  ];
+  return builtIn.concat(Array.from({ length: 17 }, (_, i) => ({
     id: "demo" + i,
     title: "Indie J2ME #" + (i + 1),
     category: cats[i % cats.length],
@@ -192,7 +205,7 @@ function demoGames() {
     description:
       "Título independente de demonstração. Cadastre seus jogos pelo painel administrativo para substituir estes exemplos. Descrição completa aparece aqui no modal.",
     createdAt: Date.now() - i * 1000
-  }));
+  })));
 }
 
 /* ==========================================================================
@@ -349,51 +362,97 @@ let cheerpjBooting = null;   // promise única de inicialização
 let cheerpjReady = false;
 let running = false;
 let romCounter = 0;
+const ME_VPATH = "/str/microemulator.jar";
+let meLoaded = false;
 
 function emuStatus(msg, spinning = false) {
   $("#emuStatus").textContent = msg || "";
   $("#emuSpinner").hidden = !spinning;
 }
 
-/* Tamanho real (em px) da "tela do celular". O CheerpJ precisa de um
-   container VISÍVEL e com tamanho > 0 no momento da criação do display,
-   caso contrário o canvas nasce 0x0 e a tela fica preta. */
-function displayBox() {
-  const r = $(".phone-screen").getBoundingClientRect();
-  return {
-    w: Math.max(350, Math.round(r.width) || 350),
-    h: Math.max(520, Math.round(r.height) || 520)
-  };
-}
+/* Tela do emulador: tamanho fixo (o MicroEmulator abre uma janela Swing de
+   ~320x560). O CSS escala o container para caber em qualquer aparelho. */
+const DISPLAY_W = 300;
+const DISPLAY_H = 600;
 
 async function ensureCheerpJ() {
   if (cheerpjBooting) return cheerpjBooting;
   cheerpjBooting = (async () => {
     emuStatus("Inicializando máquina virtual Java…", true);
 
-    // 1) torna o container visível ANTES de criar o display
     const disp = $("#cheerpjDisplay");
     disp.classList.add("active");
-    disp.style.visibility = "visible";
+    disp.style.width = DISPLAY_W + "px";
+    disp.style.height = DISPLAY_H + "px";
 
-    // 2) espera um frame para o layout aplicar o tamanho
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
+    if (typeof cheerpjInit !== "function") throw new Error("CheerpJ não carregou (verifique sua conexão).");
     await cheerpjInit({ enableInputMethods: true, clipboardMode: "system" });
 
-    // 3) display com tamanho EXPLÍCITO em pixels (nunca -1 aqui)
-    const { w, h } = displayBox();
-    cheerpjCreateDisplay(w, h, disp);
+    cheerpjCreateDisplay(DISPLAY_W, DISPLAY_H, disp);
     cheerpjReady = true;
     emuStatus("");
   })();
   return cheerpjBooting;
 }
 
-/* Grava a ROM no filesystem virtual (API nova com fallback para a antiga) */
-function addRomToVFS(path, bytes) {
+/* Grava bytes no filesystem virtual (API nova com fallback para a antiga) */
+function addToVFS(path, bytes) {
   if (typeof cheerpOSAddStringFile === "function") cheerpOSAddStringFile(path, bytes);
   else cheerpjAddStringFile(path, bytes);
+}
+
+/* O MicroEmulator é carregado por HTTP e injetado no filesystem virtual.
+   Assim não dependemos do mapeamento /app/ nem de suporte a Range no host —
+   era exatamente isso que deixava o emulador preso na tela de carregamento. */
+async function ensureMicroEmulator() {
+  if (meLoaded) return;
+  emuStatus("Carregando o núcleo do emulador…", true);
+  const res = await fetch(MICROEMULATOR_JAR, { cache: "force-cache" });
+  if (!res.ok) throw new Error("microemulator.jar não encontrado (HTTP " + res.status + ")");
+  addToVFS(ME_VPATH, new Uint8Array(await res.arrayBuffer()));
+  meLoaded = true;
+}
+
+/* ---- Leitura do MANIFEST do .jar (zip) para iniciar o MIDlet direto ---- */
+async function inflateRaw(bytes) {
+  const ds = new DecompressionStream("deflate-raw");
+  const buf = await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+async function readJarManifest(bytes) {
+  try {
+    const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const td = new TextDecoder();
+    for (let i = 0; i < bytes.length - 30; i++) {
+      if (dv.getUint32(i, true) !== 0x04034b50) continue;
+      const method = dv.getUint16(i + 8, true);
+      const csize = dv.getUint32(i + 18, true);
+      const nlen = dv.getUint16(i + 26, true);
+      const elen = dv.getUint16(i + 28, true);
+      const name = td.decode(bytes.subarray(i + 30, i + 30 + nlen));
+      if (name.toUpperCase() !== "META-INF/MANIFEST.MF") continue;
+      const dataStart = i + 30 + nlen + elen;
+      if (!csize) return null; // tamanho só no descriptor: ignora
+      const raw = bytes.subarray(dataStart, dataStart + csize);
+      return td.decode(method === 0 ? raw : await inflateRaw(raw));
+    }
+  } catch (e) {
+    console.warn("[J2ME] manifest ilegível:", e);
+  }
+  return null;
+}
+
+function midletClassFromManifest(text) {
+  if (!text) return null;
+  const unfolded = text.replace(/\r\n/g, "\n").replace(/\n /g, "");
+  const m = unfolded.match(/^MIDlet-1:\s*(.+)$/mi);
+  if (!m) return null;
+  const parts = m[1].split(",").map(s => s.trim());
+  const cls = parts[parts.length - 1];
+  return /^[\w$.]+$/.test(cls) ? cls : null;
 }
 
 /** Recebe bytes (Uint8Array) da ROM, monta no filesystem virtual e roda. */
@@ -407,25 +466,30 @@ async function bootRom(bytes, label) {
   try {
     $("#romName").textContent = "Carregado: " + label;
     await ensureCheerpJ();
+    await ensureMicroEmulator();
     emuStatus("Carregando " + label + "…", true);
 
     const vpath = "/str/rom" + ++romCounter + ".jar";
-    addRomToVFS(vpath, bytes);
+    addToVFS(vpath, bytes);
+
+    const midlet = midletClassFromManifest(await readJarManifest(bytes));
 
     $("#emuPlaceholder").classList.add("faded");
+    $("#cheerpjDisplay").classList.add("running");
     running = true;
+    emuStatus(midlet
+      ? "Toque em “Start” na tela do emulador para abrir o jogo."
+      : "Toque em “Start” na tela do emulador.");
 
-    // MicroEmulator fornece a implementação MIDP/CLDC para o .jar do jogo
-    await cheerpjRunMain(
-      "org.microemu.app.Main",
-      "/app/" + MICROEMULATOR_JAR.replace(/^\.?\//, ""),
-      vpath
-    );
+    // MicroEmulator fornece a implementação MIDP/CLDC para o .jar do jogo.
+    // Com a classe do MIDlet conhecida o jogo abre direto, sem passar pelo menu.
+    await cheerpjRunMain("org.microemu.app.Main", ME_VPATH, vpath);
   } catch (err) {
     console.error(err);
     running = false;
     $("#emuPlaceholder").classList.remove("faded");
-    emuStatus("Não foi possível iniciar. Confira o .jar do jogo e o arquivo lib/microemulator.jar.");
+    $("#cheerpjDisplay").classList.remove("running");
+    emuStatus("Não foi possível iniciar: " + (err?.message || err));
     toast("Erro ao iniciar o emulador.");
   }
 }
@@ -464,25 +528,28 @@ $("#btnStop").addEventListener("click", () => {
 
 const goFullscreen = () => {
   const el = $(".phone-screen");
+  if (document.fullscreenElement) return document.exitFullscreen();
   (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
 };
 $("#btnFullscreen").addEventListener("click", goFullscreen);
 $("#navFullscreen").addEventListener("click", e => { e.preventDefault(); goFullscreen(); });
 
-/* Teclado virtual do "celular" — envia direto ao canvas do CheerpJ */
-$$(".key").forEach(k =>
-  k.addEventListener("click", () => {
+/* Atalhos de teclado do desktop já chegam ao emulador (CheerpJ escuta eventos
+   reais). Os botões abaixo só existem se o HTML os declarar. */
+$$(".key").forEach(k => {
+  const codes = { ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39, Enter: 13 };
+  const send = type => {
     const target = $("#cheerpjDisplay canvas") || $("#cheerpjDisplay");
     target.focus?.();
     const key = k.dataset.key;
-    const codes = { ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39, Enter: 13 };
-    ["keydown", "keyup"].forEach(type =>
-      target.dispatchEvent(
-        new KeyboardEvent(type, { key, code: key, keyCode: codes[key], which: codes[key], bubbles: true })
-      )
+    target.dispatchEvent(
+      new KeyboardEvent(type, { key, code: key, keyCode: codes[key], which: codes[key], bubbles: true })
     );
-  })
-);
+  };
+  k.addEventListener("pointerdown", e => { e.preventDefault(); send("keydown"); });
+  k.addEventListener("pointerup", () => send("keyup"));
+  k.addEventListener("pointerleave", () => send("keyup"));
+});
 
 /* mensagem depois de um reload provocado pelo botão Parar/trocar jogo */
 const reloadMsg = sessionStorage.getItem("j2me.reloadMsg");
